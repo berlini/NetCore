@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DoTheDishesWebservice.Core.Services;
 using DoTheDishesWebservice.DataAccess.Configurations;
-using DoTheDishesWebservice.DataAccess.Models;
 using DoTheDishesWebservice.DataAccess.Repositories;
+using DoTheDishesWebservice.DataAccess.Repositories.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -42,8 +43,11 @@ namespace DoTheDishesWebservice
             });
 
             // Configure Repositories
-            services.AddScoped<IRepository<User>, UserRepository>();
-            services.AddScoped<IRepository<Home>, HomeRepository>();
+            services.AddScoped<IUserRespository, UserRepository>();
+            services.AddScoped<IHomeRepository, HomeRepoitory>();
+
+            // Configure Services
+            services.AddScoped<IUserService, UsersService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

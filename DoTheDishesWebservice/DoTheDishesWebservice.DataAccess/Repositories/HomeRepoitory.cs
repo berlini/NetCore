@@ -1,5 +1,6 @@
 ﻿using DoTheDishesWebservice.DataAccess.Configurations;
 using DoTheDishesWebservice.DataAccess.Models;
+using DoTheDishesWebservice.DataAccess.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,11 +8,11 @@ using System.Linq.Expressions;
 
 namespace DoTheDishesWebservice.DataAccess.Repositories
 {
-    public class HomeRepository : IRepository<Home>, IDisposable
+    public class HomeRepoitory : IHomeRepository
     {
         private readonly DishesContext Context;
 
-        public HomeRepository(DishesContext context)
+        public HomeRepoitory(DishesContext context)
         {
             Context = context;
         }
@@ -52,6 +53,11 @@ namespace DoTheDishesWebservice.DataAccess.Repositories
             home.Users = model.Users;
 
             Context.SaveChanges();
+        }
+
+        public bool CheckIfExists(int id)
+        {
+            return Context.Homes.Any(o => o.HomeId == id);
         }
 
         public void Dispose()

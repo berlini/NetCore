@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="ViewModels\HomesController\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
@@ -16,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DoTheDishesWebservice.Core\DoTheDishesWebservice.Core.csproj" />
     <ProjectReference Include="..\DoTheDishesWebservice.DataAccess\DoTheDishesWebservice.DataAccess.csproj" />
   </ItemGroup>
 

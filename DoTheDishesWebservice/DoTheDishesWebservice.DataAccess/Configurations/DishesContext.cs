@@ -16,5 +16,11 @@ namespace DoTheDishesWebservice.DataAccess.Configurations
 
         public DbSet<User> Users { get; set; }
         public DbSet<Home> Homes { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<User>()
+                .HasAlternateKey(c => c.Login);
+        }
     }
 }

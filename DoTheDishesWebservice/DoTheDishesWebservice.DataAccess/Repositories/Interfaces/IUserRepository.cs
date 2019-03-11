@@ -2,7 +2,7 @@
 
 namespace DoTheDishesWebservice.DataAccess.Repositories.Interfaces
 {
-    public interface IUserRespository : IRepository<User>
+    public interface IUserRepository : IRepository<User>
     {
         User GetUserByLogin(string login);
     }

@@ -1,6 +1,7 @@
 ﻿using DoTheDishesWebservice.Core.Utils;
 using DoTheDishesWebservice.DataAccess.Models;
 using DoTheDishesWebservice.DataAccess.Repositories.Interfaces;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 
@@ -8,57 +9,60 @@ namespace DoTheDishesWebservice.Core.Services
 {
     public class UsersService : IUserService
     {
-        private readonly IUserRespository UserRepository;
+        private readonly IUserRepository UserRepository;
         private readonly IHomeRepository HomeRepository;
+        private readonly ILogger<UsersService> Logger;
 
-        public UsersService(IUserRespository userRepository, IHomeRepository homeRepository)
+        public UsersService(IUserRepository userRepository, IHomeRepository homeRepository, ILogger<UsersService> logger)
         {
             UserRepository = userRepository;
             HomeRepository = homeRepository;
+            Logger = logger;
         }
 
-        public User Get(int userId, out string message)
+        public User Get(int userId)
         {
             try
             {
-                if (userId == 0)
+                if (userId < 1)
                 {
-                    message = "User id cannot be 0";
-                    return null;
+                    throw new ArgumentException("User id cannot lesser than 1");
                 }
 
-                message = "";
                 return UserRepository.Get(userId);
+            }
+            catch (ArgumentException ex)
+            {
+                Logger.LogWarning("Error while getting user", ex);
+                throw;
             }
             catch (Exception ex)
             {
-                message = "Unknown error while getting user: " + ex;
-                return null;
+                Logger.LogError("Unknown error while getting user", ex);
+                throw new Exception("Unknown error while getting user");
             }
         }
 
-        public IEnumerable<User> GetAll(out string message)
+        public IEnumerable<User> GetAll()
         {
             try
             {
-                message = "";
                 return UserRepository.GetAll();
             }
             catch (Exception ex)
             {
-                message = "Unknown error while getting all users: " + ex;
-                return null;
+                Logger.LogError("Unknown error while getting all users", ex);
+                throw new Exception("Unknown error while getting all users");
             }
         }
 
-        public User Login(string login, string password, out string message)
+        public User Login(string login, string password)
         {
             try
             {
                 if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password))
                 {
-                    message = "Login or Password is null or empty";
-                    return null;
+                    throw new ArgumentException("Login or Password is null or empty");
                 }
 
                 User user = UserRepository.GetUserByLogin(login);
@@ -69,42 +73,47 @@ namespace DoTheDishesWebservice.Core.Services
 
                     if (login != user.Login || passwordCrip != user.Password)
                     {
-                        message = "Invalid login or password";
-                        return null;
+                        throw new ApplicationException("Invalid login or password");
                     }
                 }
                 else
                 {
-                    message = "User not found";
-                    return null;
+                    throw new ApplicationException("User not found");
                 }
 
-                message = "";
                 return user;
+            }
+            catch (ArgumentException ex)
+            {
+                Logger.LogWarning("Error while loggin in user", ex);
+                throw;
+            }
+            catch (ApplicationException ex)
+            {
+                Logger.LogWarning("Error while loggin in user", ex);
+                throw;
             }
             catch (Exception ex)
             {
-                message = "Unknown error while loggin in user: " + ex;
-                return null;
+                Logger.LogError("Unknown error while loggin in user", ex);
+                throw new Exception("Unknown error while loggin in user");
             }
         }
 
-        public User Create(string login, string password, string nickname, int homeId, out string message)
+        public User Create(string login, string password, string nickname, int homeId)
         {
             try
             {
+                if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(nickname))
+                {
+                    throw new ArgumentException("Invalid parameters");
+                }
+
                 Home home = HomeRepository.Get(homeId);
 
                 if (home == null)
                 {
-                    message = "Home not found";
-                    return null;
-                }
-
-                if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(nickname))
-                {
-                    message = "Invalid parameters";
-                    return null;
+                    throw new ApplicationException("Home not found");
                 }
 
                 User user = new User
@@ -117,24 +126,32 @@ namespace DoTheDishesWebservice.Core.Services
 
                 UserRepository.Save(user);
 
-                message = "";
                 return user;
+            }
+            catch (ArgumentException ex)
+            {
+                Logger.LogWarning("Error while saving user to database", ex);
+                throw;
+            }
+            catch (ApplicationException ex)
+            {
+                Logger.LogWarning("Error while saving user to database", ex);
+                throw;
             }
             catch (Exception ex)
             {
-                message = "Unknown error while saving user to database: " + ex;
-                return null;
+                Logger.LogError("Unknown error while saving user to database", ex);
+                throw new Exception("Unknown error while saving user to database");
             }
         }
 
-        public User Create(string login, string password, string nickname, out string message)
+        public User Create(string login, string password, string nickname)
         {
             try
             {
                 if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(nickname))
                 {
-                    message = "Invalid parameters";
-                    return null;
+                    throw new ArgumentException("Invalid parameters");
                 }
 
                 User user = new User
@@ -146,43 +163,47 @@ namespace DoTheDishesWebservice.Core.Services
 
                 UserRepository.Save(user);
 
-                message = "";
                 return user;
+            }
+            catch (ArgumentException ex)
+            {
+                Logger.LogWarning("Error while saving user to database", ex);
+                throw;
             }
             catch (Exception ex)
             {
-                message = "Unknown error while saving user to database: " + ex;
-                return null;
+                Logger.LogError("Unknown error while saving user to database", ex);
+                throw new Exception("Unknown error while saving user to database");
             }
         }
 
-        public bool Delete(int id, out string message)
+        public void Delete(int id)
         {
             try
             {
-                if (UserRepository.CheckIfExists(id))
+                if (CheckIfExists(id))
                 {
                     UserRepository.Delete(id);
-
-                    message = "";
-                    return true;
-                }
-                else
-                {
-                    message = "User not found";
-                    return false;
                 }
             }
             catch (Exception ex)
             {
-                message = "Unknown error while deleting user: " + ex;
-                return false;
+                Logger.LogError("Unknown error while deleting user", ex);
+                throw new Exception("Unknown error while deleting user");
             }
         }
 
         public bool CheckIfExists(int id)
         {
-            return UserRepository.CheckIfExists(id);
+            try
+            {
+                return UserRepository.CheckIfExists(id);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Unknown error while checking if user exists", ex);
+                throw new Exception("Unknown error while checking if user exists");
+            }
         }
     }
 }

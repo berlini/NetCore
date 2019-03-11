@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using DoTheDishesWebservice.Core.Services;
 using DoTheDishesWebservice.DataAccess.Models;
@@ -25,19 +26,21 @@ namespace DoTheDishesWebservice.Controllers
         [ProducesResponseType(typeof(IEnumerable<User>), StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<User>> GetAllUsers()
         {
-            IEnumerable<User> list = UserService.GetAll(out string message);
-
-            if (list == null)
+            try
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, message);
-            }
+                IEnumerable<User> list = UserService.GetAll();
 
-            if (list.ToList().Count == 0)
+                if (list == null || list.ToList().Count == 0)
+                {
+                    return NotFound();
+                }
+
+                return Ok(list);
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
-
-            return Ok(list);
         }
 
         [HttpGet("{id}")]
@@ -47,26 +50,26 @@ namespace DoTheDishesWebservice.Controllers
         [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
         public ActionResult<User> GetUser(int id)
         {
-            if (id == 0)
+            try
             {
-                return BadRequest();
-            }
-
-            User user = UserService.Get(id, out string message);
-
-            if (user == null)
-            {
-                if (!string.IsNullOrEmpty(message))
+                if (id < 1)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, message);
+                    return BadRequest();
                 }
-                else
+
+                User user = UserService.Get(id);
+
+                if (user == null)
                 {
                     return NotFound();
                 }
-            }
 
-            return Ok(user);
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         [HttpPost("login")]
@@ -75,32 +78,46 @@ namespace DoTheDishesWebservice.Controllers
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
         public ActionResult<LoginResponse> Login(LoginRequest request)
         {
-            if (request == null || string.IsNullOrEmpty(request.Login) || string.IsNullOrEmpty(request.Password))
+            try
             {
-                return BadRequest(new LoginResponse
+                if (request == null || string.IsNullOrEmpty(request.Login) || string.IsNullOrEmpty(request.Password))
                 {
-                    Message = "Invalid parameters",
-                    Success = false
+                    return BadRequest(new LoginResponse
+                    {
+                        Message = "Invalid parameters",
+                        Success = false
+                    });
+                }
+
+                User user = UserService.Login(request.Login, request.Password);
+
+                return Ok(new LoginResponse
+                {
+                    Message = "",
+                    Success = true,
+                    UserLoggedIn = user
                 });
             }
-
-            User user = UserService.Login(request.Login, request.Password, out string message);
-
-            if (user == null)
+            catch (ApplicationException ex)
             {
                 return StatusCode(StatusCodes.Status401Unauthorized, new LoginResponse
                 {
-                    Message = message,
+                    Message = ex.Message,
                     Success = false
                 });
             }
-
-            return Ok(new LoginResponse
+            catch (ArgumentException ex)
             {
-                Message = "",
-                Success = true,
-                UserLoggedIn = user
-            });
+                return BadRequest(new LoginResponse
+                {
+                    Message = ex.Message,
+                    Success = false
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         [HttpPost("create")]
@@ -109,32 +126,29 @@ namespace DoTheDishesWebservice.Controllers
         [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
         public ActionResult CreateUser([FromBody] CreateUserRequest user)
         {
-            if (user == null || string.IsNullOrEmpty(user.Login) || string.IsNullOrEmpty(user.Password) || string.IsNullOrEmpty(user.Nickname))
+            try
             {
-                return BadRequest();
-            }
+                if (user == null || string.IsNullOrEmpty(user.Login) || string.IsNullOrEmpty(user.Password) || string.IsNullOrEmpty(user.Nickname))
+                {
+                    return BadRequest();
+                }
 
-            User ret;
-            string msg = "";
+                User ret;
 
-            if (user.HomeId == null || user.HomeId == 0)
-            {
-                ret = UserService.Create(user.Login, user.Password, user.Nickname, out string message);
-                msg = message;
-            }
-            else
-            {
-                ret = UserService.Create(user.Login, user.Password, user.Nickname, (int)user.HomeId, out string message);
-                msg = message;
-            }
+                if (user.HomeId == null || user.HomeId == 0)
+                {
+                    ret = UserService.Create(user.Login, user.Password, user.Nickname);
+                }
+                else
+                {
+                    ret = UserService.Create(user.Login, user.Password, user.Nickname, (int)user.HomeId);
+                }
 
-            if (ret != null)
-            {
                 return Ok(ret);
             }
-            else
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, msg);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
@@ -145,27 +159,26 @@ namespace DoTheDishesWebservice.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult DeleteUser(int id)
         {
-            if (id == 0)
+            try
             {
-                return BadRequest();
-            }
-
-            if (UserService.CheckIfExists(id))
-            {
-                bool success = UserService.Delete(id, out string message);
-
-                if (success)
+                if (id == 0)
                 {
+                    return BadRequest();
+                }
+
+                if (UserService.CheckIfExists(id))
+                {
+                    UserService.Delete(id);
                     return Ok();
                 }
                 else
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, message);
+                    return NotFound();
                 }
             }
-            else
+            catch (Exception ex)
             {
-                return NotFound();
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
     }

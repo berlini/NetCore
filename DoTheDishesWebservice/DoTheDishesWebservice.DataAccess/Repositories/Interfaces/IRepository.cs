@@ -10,7 +10,7 @@ namespace DoTheDishesWebservice.DataAccess.Repositories.Interfaces
     {
         T Get(int id);
         IQueryable<T> Query(Expression<Func<T, bool>> filter);
-        List<T> GetAll();
+        IEnumerable<T> GetAll();
         void Save(T model);
         void Delete(int id);
         void Update(T model);

@@ -29,7 +29,7 @@ namespace DoTheDishesWebservice.DataAccess.Repositories
             return Context.Homes.Where(o => o.HomeId == id).FirstOrDefault();
         }
 
-        public List<Home> GetAll()
+        public IEnumerable<Home> GetAll()
         {
             return Context.Homes.ToList();
         }

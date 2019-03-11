@@ -5,12 +5,12 @@ namespace DoTheDishesWebservice.Core.Services
 {
     public interface IUserService
     {
-        User Login(string login, string password, out string message);
-        User Get(int userId, out string message);
-        IEnumerable<User> GetAll(out string message);
-        User Create(string login, string password, string nickname, int homeId, out string message);
-        User Create(string login, string password, string nickname, out string message);
-        bool Delete(int id, out string message);
+        User Login(string login, string password);
+        User Get(int userId);
+        IEnumerable<User> GetAll();
+        User Create(string login, string password, string nickname, int homeId);
+        User Create(string login, string password, string nickname);
+        void Delete(int id);
         bool CheckIfExists(int id);
     }
 }

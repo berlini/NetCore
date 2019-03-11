@@ -31,6 +31,7 @@ namespace DoTheDishesWebservice
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddSession();
 
             // Configure EFCore
             var connectionString = @"Server=(localdb)\mssqllocaldb;Database=dishes;Trusted_Connection=True;ConnectRetryCount=0";
@@ -43,7 +44,7 @@ namespace DoTheDishesWebservice
             });
 
             // Configure Repositories
-            services.AddScoped<IUserRespository, UserRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IHomeRepository, HomeRepoitory>();
 
             // Configure Services

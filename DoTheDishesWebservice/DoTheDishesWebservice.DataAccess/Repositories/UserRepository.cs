@@ -8,7 +8,7 @@ using System.Linq.Expressions;
 
 namespace DoTheDishesWebservice.DataAccess.Repositories
 {
-    public class UserRepository : IUserRespository
+    public class UserRepository : IUserRepository
     {
         private readonly DishesContext Context;
 
@@ -29,7 +29,7 @@ namespace DoTheDishesWebservice.DataAccess.Repositories
             return Context.Users.Where(o => o.UserId == id).FirstOrDefault();
         }
 
-        public List<User> GetAll()
+        public IEnumerable<User> GetAll()
         {
             return Context.Users.ToList();
         }
